@@ -46,27 +46,6 @@ static unsigned long dma_mem_alloc(int size)
 static int dma_drv_open(struct inode *inode, struct file *file)
 {
 
-/*
-    printk("-1-dma_drv_open\n");
-    src_addr = (char *)dma_mem_alloc(COPY_BUFF_SIZE);
-    if(src_addr == NULL)
-    {
-        printk("can't alloc buffer for src\n");
-        return -ENOMEM;
-    }
-    printk("src_addr = %x\n",src_addr);
-
-    dst_addr = (char *)dma_mem_alloc(COPY_BUFF_SIZE);
-    if(dst_addr == NULL)
-    {
-        printk("can't alloc buffer for src\n");
-        return -ENOMEM;
-    }
-    printk("dst_addr = %x\n",dst_addr);
-*/
-
-
-
     src_addr = (char *)dma_alloc_coherent(NULL, COPY_BUFF_SIZE, &src_phy_addr, GFP_KERNEL|GFP_DMA);
     if(src_addr == NULL)
     {
