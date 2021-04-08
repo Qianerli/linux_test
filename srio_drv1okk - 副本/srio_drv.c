@@ -10,9 +10,6 @@
 #include <linux/ioctl.h>
 #include <linux/dma-mapping.h>
 
-#include <asm/string.h>
-#include <linux/string.h>
-
 
 
 #define SRIO_MINOR 0
@@ -24,8 +21,8 @@
 //申请DMA空间2MB
 #define COPY_BUFF_SIZE (1024*8)*2
 
-static unsigned long long *src_addr;              //源虚拟地址
-static dma_addr_t src_phy_addr;    	//源物理地址
+static char *src_addr;              //源物理地址
+static dma_addr_t src_phy_addr;    	//源虚拟地址
 
 
 /*---------------------配置srio寄存器--------------------*/
@@ -152,13 +149,13 @@ static int srio_open(struct inode * inode , struct file * filp)
 
 
 	//连接成功后申请dma区域
-    src_addr = (unsigned long long *)dma_alloc_coherent(NULL, COPY_BUFF_SIZE, &src_phy_addr, GFP_KERNEL|GFP_DMA);
+    src_addr = (char *)dma_alloc_coherent(NULL, COPY_BUFF_SIZE, &src_phy_addr, GFP_KERNEL|GFP_DMA);
     if(src_addr == NULL)
     {
         printk("can't alloc buffer for src\n");
         return -ENOMEM;
     }
-    printk("src_addr = %llx\n",*src_addr);
+    printk("src_addr = %x\n",src_addr);
     printk("src_phy_addr = %x\n",src_phy_addr);  
 
 	return 0;
@@ -200,24 +197,11 @@ static ssize_t srio_write(struct file *file, const char __user *buf, size_t coun
 /*
 	for(i=0; i<count/8; i++)
 	{
-		*(src_addr+i*sizeof(val[0]))=*(val+i);			
+		*(src_addr+i*64)=*(val+i);			
 	}
 */
-//*src_addr = *val;
-	//memcpy(val,src_addr,strlen(val)+1);
 
-
-	for(i = 0; i < 512; i++)
-	{
-		//printk("before: dst_addr[%d] = %x,src_addr[%d] = %x\n",n,dst_addr[n],n,src_addr[n]);
-
-		src_addr[i] = val[i];
-
-		//printk("later: dst_addr[%d] = %x,src_addr[%d] = %x\n",n,dst_addr[n],n,src_addr[n]);
-
-	}
-
-	//memset(src_addr, 0x55, 512);
+	memset(src_addr, 0x55, 512);
 
 printk("%s,%d\n",__func__,__LINE__);
 	mutex_unlock(&my_mutex);	
