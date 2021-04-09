@@ -74,7 +74,7 @@ static struct class* srio_class = NULL;
 //设备指针
 static struct device* srio_device = NULL;
 
-static unsigned int val_nread[2] = {0};
+static unsigned int val_nread[3] = {0};
 //static unsigned int dma_size = 512;
 
 
@@ -104,7 +104,7 @@ static long srio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			*init_reg0	= *val_nread;
 			*init_reg1	= src_phy_addr;
 			*init_reg2 	= *(val_nread+1);
-			*init_reg0 	= 0x85000000;	
+			*init_reg0 	= *(val_nread+2);	
 						
 			
 			printk("initiator NWRITE_R request:\n");  
