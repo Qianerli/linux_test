@@ -27,8 +27,6 @@ int main(int argc, char **argv)
 
 	//配置为doorbell
 	unsigned int val_doorbell[2] = {0x0a000000,0x8a000000};
-	unsigned int low = 0;
-	unsigned int high = 0;
 
 	unsigned int dma_ddr = 0;
 
@@ -52,20 +50,17 @@ int main(int argc, char **argv)
 			case '1':
 				//获取到kernel的DMA首地址
 				ioctl(fd,SRIO_DMA_DDR,&dma_ddr);
-				printf("dma_ddr = %x\n",dma_ddr);
 				break;
 			case '2':
 				//2.配置为DOORBELL，发送
-				val_doorbell[0] = val_doorbell[0] & 0xff000000;		
-
-				val_doorbell[0] = val_doorbell[0] | ((dma_ddr & 0x0000ffff)<<8);
-
+				val_doorbell[0] = val_doorbell[0] & 0xff000000;
+				val_doorbell[0] = ((dma_ddr & 0x0000fffff)<<8) & val_doorbell[0];
 				ioctl(fd,SRIO_DOORBELL,&val_doorbell);
 				break;
 			case '3':
 				//3.配置为DOORBELL，发送
 				val_doorbell[0] = val_doorbell[0] & 0xff000000;
-				val_doorbell[0] = ((dma_ddr & 0xffff0000)>>8) | val_doorbell[0];
+				val_doorbell[0] = ((dma_ddr & 0xffff0000)>>8) & val_doorbell[0];
 				ioctl(fd,SRIO_DOORBELL,&val_doorbell);
 				break;
 			case '4':

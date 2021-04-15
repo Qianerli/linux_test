@@ -15,6 +15,8 @@
 #define SRIO_DMA_DDR _IO('s',3)
 #define SRIO_DOORBELL_DATE _IO('s',4)  
 
+//申请DMA空间2MB
+#define COPY_BUFF_SIZE (1024*8)*2
 #define COPY_SIZE 512
 
 int main(int argc, char **argv)
@@ -24,23 +26,27 @@ int main(int argc, char **argv)
 	char ch = 0;
 	unsigned long long w_val[256] = { 0 };
 	unsigned long long r_val[256] = { 0 };
-
-	//配置为doorbell
-	unsigned int val_doorbell[2] = {0x0a000000,0x8a000000};
-	unsigned int low = 0;
-	unsigned int high = 0;
+	//配置为nwrite
+	unsigned int val_nwrite[4] = {0x05000000,512,0,0x85000000};
+	unsigned int val_doolbell[2] = {0};
 
 	unsigned int dma_ddr = 0;
 
-
-	//1.打开spw0设备，可读可写打开
+	//1.打开srio0设备，可读可写打开
 	fd = open("/dev/srio", O_RDWR);
 	if (fd < 0)
 	{
 		printf("fd_srio can't open!\n");
-	}	
+	}
+	//初始化写入数据
+	for(i=0; i<(COPY_SIZE/8); i++)
+	{
+		w_val[i] = 0x1111111122222222+i;
+		printf("user-write-w_val[%d] = %llx\n",i,w_val[i]);		
+	}
 
-	
+	printf("COPY_SIZE = %d\n",COPY_SIZE);	
+
 	while(1){
 		ch = getchar();
 		getchar();
@@ -50,36 +56,24 @@ int main(int argc, char **argv)
 
 		switch(ch){
 			case '1':
-				//获取到kernel的DMA首地址
-				ioctl(fd,SRIO_DMA_DDR,&dma_ddr);
-				printf("dma_ddr = %x\n",dma_ddr);
+				//1.往memory里面写数据
+				write(fd, &w_val, COPY_SIZE);
 				break;
 			case '2':
-				//2.配置为DOORBELL，发送
-				val_doorbell[0] = val_doorbell[0] & 0xff000000;		
-
-				val_doorbell[0] = val_doorbell[0] | ((dma_ddr & 0x0000ffff)<<8);
-
-				ioctl(fd,SRIO_DOORBELL,&val_doorbell);
+				//获取到kernel的DMA首地址
+				ioctl(fd,SRIO_DOORBELL_DATE,&val_doolbell);
+				dma_ddr = dma_ddr & ((val_doolbell[0] & 0x00ffff00) >> 8);
 				break;
 			case '3':
-				//3.配置为DOORBELL，发送
-				val_doorbell[0] = val_doorbell[0] & 0xff000000;
-				val_doorbell[0] = ((dma_ddr & 0xffff0000)>>8) | val_doorbell[0];
-				ioctl(fd,SRIO_DOORBELL,&val_doorbell);
+				//获取到kernel的DMA首地址
+				ioctl(fd,SRIO_DOORBELL_DATE,&val_doolbell);
+				dma_ddr = dma_ddr & ((val_doolbell[0] & 0x00ffff00) << 8);
+				val_nwrite[2] = dma_ddr;
 				break;
 			case '4':
-				//3.测试nread读写
-				//3.1 读
-				read(fd, &r_val, COPY_SIZE);
-				/*
-				for(i=0; i<COPY_SIZE/8; i++)
-				{
-					printf("user-read-r_val[%d] = %llx\n",i,r_val[i]);		
-				}
-				*/
+				//3.配置为NWRITE，启动dma
+				ioctl(fd,SRIO_NWRITE,&val_nwrite);
 				break;
-				
 			default:
 				printf("error input!\n");
 				break;
