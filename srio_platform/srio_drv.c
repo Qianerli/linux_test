@@ -13,6 +13,17 @@
 #include <asm/string.h>
 #include <linux/string.h>
 
+#include <linux/miscdevice.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/kdev_t.h>
+
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/of_irq.h>
+
+
 
 
 #define SRIO_MINOR 0
@@ -24,29 +35,27 @@
 #define SRIO_DMA_DDR _IO('s',3)
 #define SRIO_DOORBELL_DATE _IO('s',4)     
 
-//申请DMA空间2MB
-#define COPY_BUFF_SIZE (1024*8)*2
 
-static unsigned long long *src_addr;              //源虚拟地址
-static dma_addr_t src_phy_addr;    	//源物理地址
 
+
+
+size_t buff_size = (1024*8)*2;						//申请DMA空间2MB,(1024*8)*2
+
+unsigned long long *src_vir_addr;		//源虚拟地址
+dma_addr_t src_phy_addr;					//源物理地址
+
+
+//资源地址
+struct resource *srio_res;
+//IO映射
+void __iomem *srio_base = NULL;
 
 /*---------------------配置srio寄存器--------------------*/
-
-
-#define IRQ_PEND_BASE_DDR   	0x80000204  // target_reg
-#define IRQ_CLEAR_BASE_DDR   	0x8000020C  // target_reg
-
-#define TGT_INIT_BASE_DDR   	0x80020000  // target_reg
-
-
-
 #define INIT_REG0_DDR   		0x00000000
 #define INIT_REG1_DDR   		0x00000004
 #define INIT_REG2_DDR  			0x00000008
 #define INIT_REG3_DDR  			0x0000000c
 #define INIT_REG4_DDR  			0x00000010
-
 
 #define TGT_REG0_DDR  			0x00000020
 #define TGT_REG1_DDR   			0x00000024
@@ -55,40 +64,22 @@ static dma_addr_t src_phy_addr;    	//源物理地址
 
 
 
+
+
 volatile unsigned int *irq_pend  	= NULL;
 volatile unsigned int *irq_clear 	= NULL;
 
 
-volatile unsigned int *init_reg0  	= NULL;
-volatile unsigned int *init_reg1 	= NULL;
-volatile unsigned int *init_reg2  	= NULL;
-volatile unsigned int *init_reg3 	= NULL;
-volatile unsigned int *init_reg4  	= NULL;
-
-volatile unsigned int *tgt_reg0 	= NULL;
-volatile unsigned int *tgt_reg1  	= NULL;
-volatile unsigned int *tgt_reg2 	= NULL;
-volatile unsigned int *link_state 	= NULL;
-//volatile unsigned long long *init_tdfd  = NULL;
 
 
 
-
-//设备号
-dev_t devsrio;
-//声明cdevtm
-//static cdev srio_cdev;
 //定义mutex,互斥锁
 struct mutex my_mutex;
 
-//设备类指针
-static struct class* srio_class = NULL;
-//设备指针
-static struct device* srio_device = NULL;
 
-static unsigned int val_nwrite[4] = {0};
-static unsigned int val_doolbell[2] = {0};
-unsigned int doorbell_date = 0;
+u32 val_nwrite[4] = {0};
+unsigned int val_doolbell[2] = {0};
+u32 doorbell_date = 0;
 
 static unsigned int dma_ddr = 0;
 //static unsigned int dma_size = 512;
@@ -120,17 +111,18 @@ static long srio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			//barrier();
 
-			*init_reg0	= *val_nwrite;
-			*init_reg1	= src_phy_addr;
-			*init_reg2 	= *(val_nwrite+1);
-			*init_reg3 	= *(val_nwrite+2);
-			*init_reg0 	= *(val_nwrite+3);	
+			iowrite32(*val_nwrite,srio_base + INIT_REG0_DDR);
+			iowrite32(src_phy_addr,srio_base + INIT_REG1_DDR);
+			iowrite32(*(val_nwrite+1),srio_base + INIT_REG2_DDR);
+			iowrite32(*(val_nwrite+2),srio_base + INIT_REG3_DDR);
+			iowrite32(*(val_nwrite+3),srio_base + INIT_REG0_DDR);
 
 
-			printk("init_reg0 = %x\n",*init_reg0);
-			printk("init_reg1 = %x\n",*init_reg1);
-			printk("init_reg2 = %x\n",*init_reg2);
-			printk("init_reg3 = %x\n",*init_reg3);
+
+			//printk("srio_base + INIT_REG0_DDR = %x\n",*(srio_base + INIT_REG0_DDR));
+			//printk("srio_base + INIT_REG1_DDR = %x\n",*(srio_base + INIT_REG1_DDR));
+			//printk("srio_base + INIT_REG2_DDR = %x\n",*(srio_base + INIT_REG2_DDR));
+			//printk("srio_base + INIT_REG3_DDR = %x\n",*(srio_base + INIT_REG3_DDR));
 
 			//dma_sync_single_for_cpu(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_FROM_DEVICE);
 						
@@ -153,8 +145,8 @@ static long srio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			}
 
 
-			*init_reg0	= *val_doolbell;
-			*init_reg0 	= *(val_doolbell+1);
+			iowrite32(*val_doolbell,srio_base + INIT_REG0_DDR);
+			iowrite32(*(val_doolbell+1),srio_base + INIT_REG0_DDR);
 
 
 						
@@ -187,11 +179,13 @@ static long srio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			//堵塞中断并等待
 			while(!(*irq_pend & 0x00001000));//irq_pend[12]=1
 			
-			printk("kennel-tgt_reg0 = %x\n",*tgt_reg0);
+			//printk("kennel-srio_base + TGT_REG0_DDR = %x\n",*(srio_base + TGT_REG0_DDR));
 
-			doorbell_date = *tgt_reg0;
 
-			printk("tgt_reg2 = %x\n",*tgt_reg2);
+			iowrite32(doorbell_date,srio_base + TGT_REG0_DDR);
+
+
+			//printk("srio_base + TGT_REG2_DDR = %x\n",*(srio_base + TGT_REG2_DDR));
 
 			printk("kennel-doorbell_date = %x\n",doorbell_date);
 			
@@ -221,8 +215,11 @@ static int srio_open(struct inode * inode , struct file * filp)
 	*irq_clear = 0x1000; //清除irq_pend[12]
 	printk("irq is cleared\n\n");
 
-	printk("link_state: 0x%p: 0x%x\n", link_state, *link_state);
-	if(*link_state & 0x00000001) 
+
+	iowrite32(*val_doolbell,srio_base + INIT_REG0_DDR);
+
+	//printk("LINK_STATE_DDR: 0x%p: 0x%x\n", LINK_STATE_DDR, *LINK_STATE_DDR);
+	if(ioread32(srio_base + LINK_STATE_DDR) & 0x00000001) 
 		  printk("link up!\n\n");		
 	else 
 			printk("link down!\n\n");
@@ -232,39 +229,28 @@ static int srio_open(struct inode * inode , struct file * filp)
 
 printk("-----=-------");
 
-/*	
-	*init_ier=0xffffffff;
-	*init_isr=0xffffffff;
-	printk("init fifo is initilized\n");	
-	
-	*tgt_ier=0xffffffff;	
-	*tgt_isr=0xffffffff;
-	printk("tgt fifo is initilized\n");	
-	
-	*irq_clear = 0x1080; //清除irq_pend的[7]和[12]
-	printk("irq is cleared\n\n");	
-	
-	printk("link_state: 0x%p: 0x%x\n", link_state, *link_state);
-	if(*link_state & 0x00000001) 
-		  printk("link up!\n\n");		
-	else 
-			printk("link down!\n\n");
-*/
+
+
 //dma_zalloc_coherent
 //dma_alloc_coherent
 //dma_alloc_noncoherent
 //dma_alloc_writecombine 
 
-
 	//连接成功后申请dma区域
-    src_addr = (unsigned long long *)dma_alloc_coherent(srio_device, COPY_BUFF_SIZE, &src_phy_addr, GFP_KERNEL|GFP_DMA);
-    if(src_addr == NULL)
+    src_vir_addr = (unsigned long long *)dma_alloc_coherent(NULL, buff_size, &src_phy_addr, GFP_KERNEL|GFP_DMA);
+    if(src_vir_addr == NULL)
     {
         printk("can't alloc buffer for src\n");
         return -ENOMEM;
     }
-    printk("src_addr = %llx\n",*src_addr);
+    printk("src_vir_addr = %llx\n",*src_vir_addr);
     printk("src_phy_addr = %x\n",src_phy_addr);  
+
+
+
+
+
+
 
 	return 0;
 }
@@ -295,7 +281,7 @@ static ssize_t srio_write(struct file *file, const char __user *buf, size_t coun
 	}	
 
 /*
-	if(memcmp(src_addr, val, 512) == 0)
+	if(memcmp(src_vir_addr, val, 512) == 0)
 	{
 		printk("MEM_WRITE_DMA OK\n");
 	}
@@ -307,25 +293,25 @@ static ssize_t srio_write(struct file *file, const char __user *buf, size_t coun
 /*
 	for(i=0; i<count/8; i++)
 	{
-		*(src_addr+i*sizeof(val[0]))=*(val+i);			
+		*(src_vir_addr+i*sizeof(val[0]))=*(val+i);			
 	}
 */
-//*src_addr = *val;
-	//memcpy(val,src_addr,strlen(val)+1);
+//*src_vir_addr = *val;
+	//memcpy(val,src_vir_addr,strlen(val)+1);
 
 
 	for(i = 0; i < count/8; i++)
 	{
-		//printk("before: dst_addr[%d] = %x,src_addr[%d] = %x\n",n,dst_addr[n],n,src_addr[n]);
+		//printk("before: dst_addr[%d] = %x,src_vir_addr[%d] = %x\n",n,dst_addr[n],n,src_vir_addr[n]);
 
-		src_addr[i] = val[i];
+		src_vir_addr[i] = val[i];
 
-		//printk("later: dst_addr[%d] = %x,src_addr[%d] = %x\n",n,dst_addr[n],n,src_addr[n]);
+		//printk("later: dst_addr[%d] = %x,src_vir_addr[%d] = %x\n",n,dst_addr[n],n,src_vir_addr[n]);
 
 	}
 
 	//dma_sync_single_for_cpu(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_FROM_DEVICE);
-	//memset(src_addr, 0x55, 512);
+	//memset(src_vir_addr, 0x55, 512);
 
 printk("%s,%d\n",__func__,__LINE__);
 	mutex_unlock(&my_mutex);	
@@ -342,9 +328,9 @@ static ssize_t srio_read(struct file *file,char __user *buf, size_t count, loff_
 
 	//dma_sync_single_for_device(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_TO_DEVICE);
 
-	printk("tgt_reg0 =  0x%x\n", ioread32(tgt_reg0));
-	printk("tgt_reg1 =  0x%x\n", ioread32(tgt_reg1));
-	printk("tgt_reg2 =  0x%x\n", ioread32(tgt_reg2));
+	//printk("TGT_REG0_DDR =  0x%x\n", ioread32(TGT_REG0_DDR));
+	//printk("TGT_REG1_DDR =  0x%x\n", ioread32(TGT_REG1_DDR));
+	//printk("TGT_REG2_DDR =  0x%x\n", ioread32(TGT_REG2_DDR));
 
 	//dma_sync_single_for_cpu(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_FROM_DEVICE);
 
@@ -358,14 +344,12 @@ int srio_release(struct inode *inode, struct file *filp)
 {
 	printk("enter srio_release!\n");
 
-
-	
 	return 0;
 }
 
 
 //声明操作函数集合
-static struct file_operations srio_fops = {
+static struct file_operations srio_ops = {
 	.owner  =   THIS_MODULE,    //这是一个宏，推向编译模块时自动创建的__this_module变量
 	.open   =   srio_open,     
 	.write  =   srio_write,
@@ -375,101 +359,109 @@ static struct file_operations srio_fops = {
 };
 
 
-//加载函数
-int ret;
-static int __init srio_init(void)
+
+//分配初始化miscdevice
+struct miscdevice srio_dev = {
+	.minor = MISC_DYNAMIC_MINOR,//系统分配次设备号
+	.name = "srio",//设备文件名
+	.fops = &srio_ops,//操作函数集合
+};
+
+
+
+//中断处理函数
+irqreturn_t srio_interrupt(int irq, void *dev_id)
 {
-	printk("srio_drvtm_init\n");	
-	//1.注册字符设备驱动，告诉内核	
-    ret = register_chrdev(0, "srio", &srio_fops);
-    if (ret < 0){
-        printk("failed to register devsrio.\n");
-        return -1;
-    }
-	//构建设备号
-	devsrio = MKDEV(ret, SRIO_MINOR);
-	
-	//2.注册设备类
-	/*	成功会在/sys/class目录下出现srio子目录*/
-    srio_class = class_create(THIS_MODULE, "srio");
-    if(IS_ERR(srio_class)){
-        printk("failed to create srio moudle class.\n");
-        unregister_chrdev(ret, "srio");
-        return -1;
-    }
-	
-	
-	//3.创建设备文件
-	/* dev/srio */;
-    srio_device = device_create(srio_class, NULL, devsrio, NULL, "srio");
-    if (IS_ERR(srio_device)){
-        printk("failed to create devsrio .\n");
-        unregister_chrdev(ret, "srio");
-        return -1;
-    }
-	
-	//4.申请srio资源，映射
-	irq_pend  	  	= (volatile unsigned int *)ioremap(IRQ_PEND_BASE_DDR, 32);
-	irq_clear 	  	= (volatile unsigned int *)ioremap(IRQ_CLEAR_BASE_DDR, 32);
+	printk("hello irq!\n");
 
-
-
-	init_reg0 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+INIT_REG0_DDR, 32);
-	init_reg1 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+INIT_REG1_DDR, 32);
-	init_reg2  	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+INIT_REG2_DDR , 32);
-	init_reg3 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+INIT_REG3_DDR, 32);
-	init_reg4  	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+INIT_REG4_DDR , 32);
-
-	tgt_reg0 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+TGT_REG0_DDR	, 32);
-	tgt_reg1 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+TGT_REG1_DDR	, 32);
-	tgt_reg2 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+TGT_REG2_DDR , 32);
-	link_state 	= (volatile unsigned int *)ioremap(TGT_INIT_BASE_DDR+LINK_STATE_DDR , 32);
-	//init_tdfd  		= (volatile unsigned long long *)ioremap(INIT_DATA_BASE_DDR+INIT_TGT_TDFD_DDR, 0xfff);
-	//init_rdfd  		= (volatile unsigned long long *)ioremap(INIT_DATA_BASE_DDR+INIT_TGT_RDFD_DDR, 0xfff);
-
-
-	//初始化互斥锁
-	mutex_init(&my_mutex);
-    return 0;
+	return IRQ_HANDLED;//处理成功
 }
 
 
-//卸载函数
-static void __exit srio_exit(void)
+//srio设备的probe函数实现
+static int srio_probe(struct platform_device *pdev)
 {
-    printk("1.exit srio module.\n");
-	
-	//1.解除srio,IO映射
-	iounmap(irq_pend);
-	iounmap(irq_clear);
+	int ret,irq,err;
+	struct device_node *np = pdev->dev.of_node;
 
-	iounmap(init_reg0);
-	iounmap(init_reg1);
-    iounmap(init_reg2);
-	iounmap(init_reg3);
-    iounmap(init_reg4);
-
-	iounmap(tgt_reg0);
-    iounmap(tgt_reg1);
-	iounmap(tgt_reg2);
-
-	//2.销毁设备文件
-    device_destroy(srio_class, devsrio);
+	printk("match srio open srio_probe");
 	
-	//3.注销设备类
-    class_unregister(srio_class);
-    class_destroy(srio_class);	
-	
-	//4.注销字符设备驱动，卸载
-    unregister_chrdev(ret, "srio");	
-	
-    printk("2.srio module exit.\n");	
+	//注册miscdevice
+	ret = misc_register(&srio_dev);
+	if(ret<0){
+		printk("misc_register failed!\n");
+	}
 
+	//获取srio的资源
+	srio_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if(!srio_res){
+		printk("platform_get_srio_resource failed!\n");
+	}
+
+	//映射IO内存
+	srio_base = devm_ioremap_resource(&pdev->dev, srio_res);
+	if (IS_ERR(srio_base))
+		return PTR_ERR(srio_base);
+
+	//中断
+	irq = irq_of_parse_and_map(np, 0);
+	if (!irq) {
+		dev_err(&pdev->dev, "no irq found\n");
+	}
+
+/*
+	ret = request_irq(gpio_to_irq(btn_info[i].gpio), //中断号
+						btn_handler, //中断处理函数
+						IRQF_TRIGGER_RISING|IRQF_TRIGGER_FALLING, //中断标志,包括触发方式----- 上升下降沿触发
+						"SRIO12", //中断名称
+						&btn_info[i]);//传递给中断处理函数的参数
+*/
+
+	err = request_irq(12, srio_interrupt, IRQF_SHARED,
+			  "SRIO12", NULL);
+	if (err){
+		printk("request irq failed");
+	}
+
+
+	printk("srio_probe end!\n");
+
+	return ret;     
 }
 
-//声明模块出入口
-module_init(srio_init);
-module_exit(srio_exit);
+
+
+int srio_remove(struct platform_device *pdev)
+{
+	//解除IO映射
+	iounmap(srio_base);
+
+	//注销miscdevice	
+	misc_deregister(&srio_dev);
+
+	return 0;
+}
+
+
+static const struct of_device_id srio_of_match[] = {
+	{.name = "YDDD_SRIO"},
+	{.name = "19_09"},
+	{},
+};
+
+MODULE_DEVICE_TABLE(of,srio_of_match);
+
+
+static struct platform_driver srio_drv = {
+	.driver = {
+		.name = "srio",
+		.of_match_table = srio_of_match,
+	},
+	.probe = srio_probe,
+	.remove = srio_remove,
+};
+
+module_platform_driver(srio_drv);
 
 
 MODULE_AUTHOR("Qianer");	//作者

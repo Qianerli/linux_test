@@ -1,8 +1,8 @@
-cmd_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o := /opt/sparc-gaisler-linux4.9/bin/sparc-gaisler-linux4.9-gcc -Wp,-MD,/mnt/hgfs/github/linux_test/srio_drv1okk/.srio_drv.o.d  -nostdinc -isystem /opt/sparc-gaisler-linux4.9/lib/gcc/sparc-gaisler-linux4.9/4.9.4/include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include -I./arch/sparc/include/generated/uapi -I./arch/sparc/include/generated  -I/opt/linuxbuild-2.0.0/linux/linux-src/include -I./include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/uapi -I/opt/linuxbuild-2.0.0/linux/linux-src/include/uapi -I./include/generated/uapi -include /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kconfig.h -I/opt/linuxbuild-2.0.0/linux/linux-src//mnt/hgfs/github/linux_test/srio_drv1okk -I/mnt/hgfs/github/linux_test/srio_drv1okk -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -m32 -mcpu=leon3 -pipe -mno-fpu -fcall-used-g5 -fcall-used-g7 -Wa,-Av8 -fno-delete-null-pointer-checks -O2 --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fomit-frame-pointer -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time  -DMODULE  -DKBUILD_BASENAME='"srio_drv"'  -DKBUILD_MODNAME='"srio_drv"' -c -o /mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o /mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.c
+cmd_/mnt/hgfs/linux_test/srio_platform/srio_drv.o := /opt/sparc-gaisler-linux4.9/bin/sparc-gaisler-linux4.9-gcc -Wp,-MD,/mnt/hgfs/linux_test/srio_platform/.srio_drv.o.d  -nostdinc -isystem /opt/sparc-gaisler-linux4.9/lib/gcc/sparc-gaisler-linux4.9/4.9.4/include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include -I./arch/sparc/include/generated/uapi -I./arch/sparc/include/generated  -I/opt/linuxbuild-2.0.0/linux/linux-src/include -I./include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/uapi -I/opt/linuxbuild-2.0.0/linux/linux-src/include/uapi -I./include/generated/uapi -include /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kconfig.h -I/opt/linuxbuild-2.0.0/linux/linux-src//mnt/hgfs/linux_test/srio_platform -I/mnt/hgfs/linux_test/srio_platform -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -m32 -mcpu=v8 -pipe -mno-fpu -fcall-used-g5 -fcall-used-g7 -Wa,-Av8 -fno-delete-null-pointer-checks -O2 --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fomit-frame-pointer -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time  -DMODULE  -DKBUILD_BASENAME='"srio_drv"'  -DKBUILD_MODNAME='"srio_drv"' -c -o /mnt/hgfs/linux_test/srio_platform/srio_drv.o /mnt/hgfs/linux_test/srio_platform/srio_drv.c
 
-source_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o := /mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.c
+source_/mnt/hgfs/linux_test/srio_platform/srio_drv.o := /mnt/hgfs/linux_test/srio_platform/srio_drv.c
 
-deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o := \
+deps_/mnt/hgfs/linux_test/srio_platform/srio_drv.o := \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/init.h \
     $(wildcard include/config/debug/rodata.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/compiler.h \
@@ -79,7 +79,6 @@ deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o := \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/bitops.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/bitops.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/bitops_32.h \
-    $(wildcard include/config/sparc/leon/cas.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/uapi/asm/byteorder.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/byteorder/big_endian.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/uapi/linux/byteorder/big_endian.h \
@@ -216,7 +215,6 @@ deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o := \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/rwlock_types.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/spinlock.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/spinlock_32.h \
-    $(wildcard include/config/sparc/leon.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/processor.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/processor_32.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/signal.h \
@@ -751,7 +749,59 @@ deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o := \
     $(wildcard include/config/balloon/compaction.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kmemcheck.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/dma-mapping.h \
+    $(wildcard include/config/sparc/leon.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/miscdevice.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/uapi/linux/major.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/io.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/platform_device.h \
+    $(wildcard include/config/suspend.h) \
+    $(wildcard include/config/hibernate/callbacks.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/slab.h \
+    $(wildcard include/config/debug/slab.h) \
+    $(wildcard include/config/failslab.h) \
+    $(wildcard include/config/have/hardened/usercopy/allocator.h) \
+    $(wildcard include/config/slab.h) \
+    $(wildcard include/config/slub.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kmemleak.h \
+    $(wildcard include/config/debug/kmemleak.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kasan.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/interrupt.h \
+    $(wildcard include/config/irq/forced/threading.h) \
+    $(wildcard include/config/generic/irq/probe.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/irqreturn.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/irqnr.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/uapi/linux/irqnr.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/hardirq.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/ftrace_irq.h \
+    $(wildcard include/config/ftrace/nmi/enter.h) \
+    $(wildcard include/config/hwlat/tracer.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/vtime.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/context_tracking_state.h \
+    $(wildcard include/config/context/tracking.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/hardirq.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/hardirq_32.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/asm-generic/hardirq.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/irq_cpustat.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/irq.h \
+    $(wildcard include/config/generic/irq/ipi.h) \
+    $(wildcard include/config/generic/pending/irq.h) \
+    $(wildcard include/config/hardirqs/sw/resend.h) \
+    $(wildcard include/config/generic/irq/legacy/alloc/hwirq.h) \
+    $(wildcard include/config/generic/irq/legacy.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/irq.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/irq_32.h \
+  arch/sparc/include/generated/asm/irq_regs.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/asm-generic/irq_regs.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/irqdesc.h \
+    $(wildcard include/config/irq/preflow/fasteoi.h) \
+    $(wildcard include/config/sparse/irq.h) \
+    $(wildcard include/config/handle/domain/irq.h) \
+  /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/hw_irq.h \
+  /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/of_irq.h \
+    $(wildcard include/config/ppc32.h) \
+    $(wildcard include/config/ppc/pmac.h) \
+    $(wildcard include/config/of/irq.h) \
 
-/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o: $(deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o)
+/mnt/hgfs/linux_test/srio_platform/srio_drv.o: $(deps_/mnt/hgfs/linux_test/srio_platform/srio_drv.o)
 
-$(deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.o):
+$(deps_/mnt/hgfs/linux_test/srio_platform/srio_drv.o):

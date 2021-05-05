@@ -1,8 +1,8 @@
-cmd_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o := /opt/sparc-gaisler-linux4.9/bin/sparc-gaisler-linux4.9-gcc -Wp,-MD,/mnt/hgfs/github/linux_test/srio_drv1okk/.srio_drv.mod.o.d  -nostdinc -isystem /opt/sparc-gaisler-linux4.9/lib/gcc/sparc-gaisler-linux4.9/4.9.4/include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include -I./arch/sparc/include/generated/uapi -I./arch/sparc/include/generated  -I/opt/linuxbuild-2.0.0/linux/linux-src/include -I./include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/uapi -I/opt/linuxbuild-2.0.0/linux/linux-src/include/uapi -I./include/generated/uapi -include /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kconfig.h -I/opt/linuxbuild-2.0.0/linux/linux-src//mnt/hgfs/github/linux_test/srio_drv1okk -I/mnt/hgfs/github/linux_test/srio_drv1okk -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -m32 -mcpu=leon3 -pipe -mno-fpu -fcall-used-g5 -fcall-used-g7 -Wa,-Av8 -fno-delete-null-pointer-checks -O2 --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fomit-frame-pointer -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time  -DKBUILD_BASENAME='"srio_drv.mod"'  -DKBUILD_MODNAME='"srio_drv"' -DMODULE  -c -o /mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o /mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.c
+cmd_/mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o := /opt/sparc-gaisler-linux4.9/bin/sparc-gaisler-linux4.9-gcc -Wp,-MD,/mnt/hgfs/linux_test/srio_platform/.srio_drv.mod.o.d  -nostdinc -isystem /opt/sparc-gaisler-linux4.9/lib/gcc/sparc-gaisler-linux4.9/4.9.4/include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include -I./arch/sparc/include/generated/uapi -I./arch/sparc/include/generated  -I/opt/linuxbuild-2.0.0/linux/linux-src/include -I./include -I/opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/uapi -I/opt/linuxbuild-2.0.0/linux/linux-src/include/uapi -I./include/generated/uapi -include /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/kconfig.h -I/opt/linuxbuild-2.0.0/linux/linux-src//mnt/hgfs/linux_test/srio_platform -I/mnt/hgfs/linux_test/srio_platform -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -m32 -mcpu=v8 -pipe -mno-fpu -fcall-used-g5 -fcall-used-g7 -Wa,-Av8 -fno-delete-null-pointer-checks -O2 --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fomit-frame-pointer -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time  -DKBUILD_BASENAME='"srio_drv.mod"'  -DKBUILD_MODNAME='"srio_drv"' -DMODULE  -c -o /mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o /mnt/hgfs/linux_test/srio_platform/srio_drv.mod.c
 
-source_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o := /mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.c
+source_/mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o := /mnt/hgfs/linux_test/srio_platform/srio_drv.mod.c
 
-deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o := \
+deps_/mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o := \
     $(wildcard include/config/module/unload.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/module.h \
     $(wildcard include/config/modules.h) \
@@ -77,7 +77,6 @@ deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o := \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/bitops.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/bitops.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/bitops_32.h \
-    $(wildcard include/config/sparc/leon/cas.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/uapi/asm/byteorder.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/byteorder/big_endian.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/uapi/linux/byteorder/big_endian.h \
@@ -216,7 +215,6 @@ deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o := \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/rwlock_types.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/spinlock.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/spinlock_32.h \
-    $(wildcard include/config/sparc/leon.h) \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/processor.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/processor_32.h \
   /opt/linuxbuild-2.0.0/linux/linux-src/arch/sparc/include/asm/signal.h \
@@ -431,6 +429,6 @@ deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o := \
   /opt/linuxbuild-2.0.0/linux/linux-src/include/linux/vermagic.h \
   include/generated/utsrelease.h \
 
-/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o: $(deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o)
+/mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o: $(deps_/mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o)
 
-$(deps_/mnt/hgfs/github/linux_test/srio_drv1okk/srio_drv.mod.o):
+$(deps_/mnt/hgfs/linux_test/srio_platform/srio_drv.mod.o):
