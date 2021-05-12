@@ -19,9 +19,9 @@ __used
 __attribute__((section(".modinfo"))) =
 "depends=";
 
-MODULE_ALIAS("of:NYDDD_SRIOT*");
-MODULE_ALIAS("of:NYDDD_SRIOT*C*");
+MODULE_ALIAS("of:NYDXX_SRIOT*");
+MODULE_ALIAS("of:NYDXX_SRIOT*C*");
 MODULE_ALIAS("of:N19_09T*");
 MODULE_ALIAS("of:N19_09T*C*");
 
-MODULE_INFO(srcversion, "734F9F787BBF942F5491C31");
+MODULE_INFO(srcversion, "BD10F0FBF6E3E0CFA05F0CD");

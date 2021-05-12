@@ -39,6 +39,12 @@
 
 
 
+static DECLARE_WAIT_QUEUE_HEAD(button_waitq);
+ 
+/* 中断事件标志, 中断服务程序将它置1，button_drv_read将它清0 */
+static volatile int ev_press = 0;
+
+
 size_t buff_size = (1024*8)*2;						//申请DMA空间2MB,(1024*8)*2
 
 unsigned long long *src_vir_addr;		//源虚拟地址
@@ -63,16 +69,6 @@ void __iomem *srio_base = NULL;
 #define LINK_STATE_DDR  		0x0000002c
 
 
-
-
-
-volatile unsigned int *irq_pend  	= NULL;
-volatile unsigned int *irq_clear 	= NULL;
-
-
-
-
-
 //定义mutex,互斥锁
 struct mutex my_mutex;
 
@@ -81,8 +77,23 @@ u32 val_nwrite[4] = {0};
 unsigned int val_doolbell[2] = {0};
 u32 doorbell_date = 0;
 
+//中断号
+int irq;
+
 static unsigned int dma_ddr = 0;
 //static unsigned int dma_size = 512;
+
+
+//中断处理函数
+irqreturn_t srio_interrupt(int irq, void *dev_id)
+{
+	printk("hello irq!\n");
+
+    ev_press = 1;                  /* 表示中断发生了 */
+    wake_up_interruptible(&button_waitq);   /* 唤醒休眠的进程 */
+
+	return IRQ_HANDLED;//处理成功
+}
 
 
 static long srio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -174,10 +185,14 @@ static long srio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			break;
 		case SRIO_DOORBELL_DATE:
 			printk("SRIO_DOORBELL_DATE!\n");
-			printk("*irq_pend = %x\n"	,*irq_pend);
+			printk("wait srio irq\n");
 
 			//堵塞中断并等待
-			while(!(*irq_pend & 0x00001000));//irq_pend[12]=1
+			//while(!(*irq_pend & 0x00001000));//irq_pend[12]=1
+			//srio_interrupt();
+
+			/* 如果没有按键动作, 休眠 */
+			wait_event_interruptible(button_waitq, ev_press);
 			
 			//printk("kennel-srio_base + TGT_REG0_DDR = %x\n",*(srio_base + TGT_REG0_DDR));
 
@@ -212,7 +227,7 @@ static int srio_open(struct inode * inode , struct file * filp)
 	
 	printk("drvsrio_open\n");
 
-	*irq_clear = 0x1000; //清除irq_pend[12]
+	//*irq_clear = 0x1000; //清除irq[12]
 	printk("irq is cleared\n\n");
 
 
@@ -220,14 +235,24 @@ static int srio_open(struct inode * inode , struct file * filp)
 
 	//printk("LINK_STATE_DDR: 0x%p: 0x%x\n", LINK_STATE_DDR, *LINK_STATE_DDR);
 	if(ioread32(srio_base + LINK_STATE_DDR) & 0x00000001) 
-		  printk("link up!\n\n");		
+	{
+		printk("link up!\n\n");
+		printk("srio_base-virt = %#x\n",(u32)srio_base);
+		printk("srio_base-phys = %#lx\n",virt_to_phys(srio_base));	
+	}
+	
 	else 
-			printk("link down!\n\n");
+	{
+		printk("link down!\n\n");
+		printk("srio_base-virt = %#x\n",(u32)srio_base);
+		printk("srio_base-phys = %#lx\n",virt_to_phys(srio_base));	
+	}
+			
 
 	//barrier();
   
 
-printk("-----=-------");
+printk("-----=-------\n");
 
 
 
@@ -262,8 +287,6 @@ static ssize_t srio_write(struct file *file, const char __user *buf, size_t coun
 	unsigned long long val[128] = {0};
 
 	printk("srio_A_write\n");
-	
-	printk("*irq_pend = %x\n"	,*irq_pend);
 
 	//dma_sync_single_for_device(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_TO_DEVICE);
 
@@ -323,8 +346,9 @@ printk("%s,%d\n",__func__,__LINE__);
 static ssize_t srio_read(struct file *file,char __user *buf, size_t count, loff_t * ppos)
 {
 	printk("srio_B_read\n");
-	printk("irq_pend = %x\n",*irq_pend);
-	while(!(*irq_pend & 0x1000));
+	printk("wait srio irq\n");
+	//while(!(*irq_pend & 0x1000));
+	//srio_interrupt();
 
 	//dma_sync_single_for_device(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_TO_DEVICE);
 
@@ -334,7 +358,7 @@ static ssize_t srio_read(struct file *file,char __user *buf, size_t count, loff_
 
 	//dma_sync_single_for_cpu(srio_device, src_phy_addr,COPY_BUFF_SIZE,  DMA_FROM_DEVICE);
 
-	*irq_clear = 0x1000; //清除irq_pend[12]
+	//*irq_clear = 0x1000; //清除irq[12]
 	printk("irq is cleared\n\n");		
 
     return 0;
@@ -343,6 +367,8 @@ static ssize_t srio_read(struct file *file,char __user *buf, size_t count, loff_
 int srio_release(struct inode *inode, struct file *filp)
 {
 	printk("enter srio_release!\n");
+
+	//free_irq(irq,(void *) pdev);
 
 	return 0;
 }
@@ -369,22 +395,15 @@ struct miscdevice srio_dev = {
 
 
 
-//中断处理函数
-irqreturn_t srio_interrupt(int irq, void *dev_id)
-{
-	printk("hello irq!\n");
-
-	return IRQ_HANDLED;//处理成功
-}
-
-
 //srio设备的probe函数实现
 static int srio_probe(struct platform_device *pdev)
 {
-	int ret,irq,err;
-	struct device_node *np = pdev->dev.of_node;
+	int ret,err;
+	struct device *dev = &(pdev->dev);
+	struct device_node *node = dev->of_node;
+	//struct device_node *node = pdev->dev.of_node;
 
-	printk("match srio open srio_probe");
+	printk("match srio open srio_probe\n");
 	
 	//注册miscdevice
 	ret = misc_register(&srio_dev);
@@ -398,31 +417,40 @@ static int srio_probe(struct platform_device *pdev)
 		printk("platform_get_srio_resource failed!\n");
 	}
 
+	printk("srio_res = %#x",(u32)srio_res);
+
 	//映射IO内存
 	srio_base = devm_ioremap_resource(&pdev->dev, srio_res);
 	if (IS_ERR(srio_base))
 		return PTR_ERR(srio_base);
 
-	//中断
-	irq = irq_of_parse_and_map(np, 0);
+	//中断//动态分配软中断号
+	irq = irq_of_parse_and_map(node, 0);
 	if (!irq) {
 		dev_err(&pdev->dev, "no irq found\n");
 	}
+	printk("irq = %x\n",irq);
 
 /*
 	ret = request_irq(gpio_to_irq(btn_info[i].gpio), //中断号
 						btn_handler, //中断处理函数
 						IRQF_TRIGGER_RISING|IRQF_TRIGGER_FALLING, //中断标志,包括触发方式----- 上升下降沿触发
-						"SRIO12", //中断名称
+						"srio", //中断名称
 						&btn_info[i]);//传递给中断处理函数的参数
 */
-
-	err = request_irq(12, srio_interrupt, IRQF_SHARED,
-			  "SRIO12", NULL);
+/*
+	err = request_irq(irq, srio_interrupt, IRQF_SHARED,
+			  "srio", (void *) pdev);
 	if (err){
-		printk("request irq failed");
+		printk("request irq failed\n");
 	}
-
+*/
+	err = devm_request_irq(dev, irq, srio_interrupt,IRQF_SHARED,
+			       "srio", (void *) pdev);
+	if (err) {
+		dev_err(dev, "unable to request irq %d\n", irq);
+		return err;
+	}
 
 	printk("srio_probe end!\n");
 
@@ -439,12 +467,13 @@ int srio_remove(struct platform_device *pdev)
 	//注销miscdevice	
 	misc_deregister(&srio_dev);
 
+
 	return 0;
 }
 
 
 static const struct of_device_id srio_of_match[] = {
-	{.name = "YDDD_SRIO"},
+	{.name = "YDXX_SRIO"},
 	{.name = "19_09"},
 	{},
 };
